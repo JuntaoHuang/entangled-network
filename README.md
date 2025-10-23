@@ -9,7 +9,7 @@ For more details on the algorithm and implementation, please refer to our paper:
 
 ## Environment
 
-- **Compiler:** GCC 11  
+- **Compiler:** GCC 11
 - **Platform:** Linux / macOS  
 - **Dependencies:** Standard C++ libraries and MATLAB (for plotting)
 
@@ -29,6 +29,13 @@ make
 ```bash
 ./main 20 80 10 5.0 40 1e-2 100000 1e-1 1e-1 5 0.0 2 2 2 0 0.0 1e-3 0 0.5 100 1 1234
 ```
+This command runs the simulation with the specified parameters. The computation typically takes a few minutes to complete, depending on the hardware configuration.
+
+After the run finishes, the program will automatically generate:
+- Log files (*.txt) containing runtime information and diagnostic data.
+- Binary data files (*.bin) storing numerical results.
+
+You can then proceed to the next step to visualize and analyze the results in MATLAB.
 
 ### Example Input Parameters
 
