@@ -1,0 +1,126 @@
+
+
+function plot_network_energy_entangle_init_zoom_crack(x, x_init, neighbour_matrix, chain_num, chain_init_len, chain_info, is_cross_linker, energy_function, fig_name)
+    
+    strech_info = compute_stretch_entangle(x, neighbour_matrix, chain_num, chain_init_len, chain_info);
+    
+    fig = figure; hold on; axis equal;
+% set(fig, 'Visible', 'off');    
+    dof = size(x, 1);
+    
+ratio = 4;
+    num_layer = round(sqrt(dof / ratio));
+    num_width = num_layer * ratio;
+
+    cmap = jet(256);
+
+    % compute min and max stretch
+    stretch_min = 10.0;
+    stretch_max = 0.0;
+    for i = 1:dof    
+        for j = 1:chain_num(i)
+            stretch_min = min(stretch_min, strech_info(i,j));
+            stretch_max = max(stretch_max, strech_info(i,j));
+        end
+    end
+stretch_min = 1.0;
+stretch_max = 5.0;
+energy_min = energy_function(stretch_min);
+energy_max = energy_function(stretch_max);
+
+    %% plot chains near crack and stretch in color
+    interval_in_x = 15;
+    interval_in_y = 15;
+    
+    min_ix = round(num_width / 2) + 1 - interval_in_x;
+    max_ix = round(num_width / 2) + 1 + interval_in_x;
+    min_iy = round(num_layer / 2) - interval_in_y;
+    max_iy = round(num_layer / 2) + 1 + interval_in_y;
+    
+    for ix = min_ix : max_ix
+    for iy = min_iy : max_iy
+
+        i = local_to_global_index(ix, iy, num_width);
+        
+        i = min(i, dof);
+        i = max(i, 1);
+
+        for j = 1:chain_num(i)
+    
+            % node index in this chain
+            node_in_chain = reshape(chain_info(i,j,:), 1, []);
+            
+            % remove zero index
+            node_in_chain(node_in_chain==0) = [];
+    
+            num_node_in_chain = length(node_in_chain);
+            
+            for k = 1:(num_node_in_chain-1)
+
+                node1 = node_in_chain(k);
+                node2 = node_in_chain(k+1);
+
+                [node1_ix, node1_iy] = global_to_local_index(node1, num_width);
+                [node2_ix, node2_iy] = global_to_local_index(node2, num_width);
+
+                if ((node1_ix <= max_ix) && (node1_ix >= min_ix) ...
+                    && (node2_ix <= max_ix) && (node2_ix >= min_ix) ...
+                    && (node1_iy <= max_iy) && (node1_iy >= min_iy) ...
+                    && (node2_iy <= max_iy) && (node2_iy >= min_iy))
+
+                    data_x = [x_init(node_in_chain(k), 1); x_init(node_in_chain(k+1), 1)];
+                    data_y = [x_init(node_in_chain(k), 2); x_init(node_in_chain(k+1), 2)];                
+                    data_c = strech_info(i,j);
+
+if data_c <= stretch_min
+    data_c = stretch_min;
+end
+if data_c >= stretch_max
+    data_c = stretch_max;
+end
+
+                    data_c = energy_function(data_c);
+                    normalized_energy = (data_c - energy_min) / (energy_max - energy_min);
+
+                    colorIndex = round(normalized_energy * (size(cmap, 1) - 1)) + 1;
+    
+                    plot(data_x, data_y, 'Color', cmap(colorIndex, :), 'LineWidth', 8);
+
+                end
+            end
+        end
+    end
+    end
+
+    % colormap('jet');    % assign the colormap
+    % shading flat        % so each line segment has a plain color
+    % view(2)             % set view in X-Y plane
+    % colorbar
+    % clim([4 5]);
+
+    % Add a colorbar to show the mapping of color to original values
+    colormap(cmap);
+    c = colorbar;
+    
+    % Set colorbar ticks to reflect original values
+    tickValues = linspace(0.0, 1.0, 6);
+    c.Ticks = tickValues;
+    c.TickLabels = arrayfun(@num2str, tickValues, 'UniformOutput', false); % Set original values as labels    
+    % c.Label.String = 'Value';
+
+    % for i = 1:dof
+    %     if (is_cross_linker(i) == 1)
+    %         plot(x_init(i,1), x_init(i,2), 'o', 'MarkerFaceColor', 'k', 'MarkerEdgeColor', 'k', 'MarkerSize', 2.5, 'linewidth', 1.2);
+    %     else
+    %         plot(x_init(i,1), x_init(i,2), 'x', 'MarkerFaceColor', 'r', 'MarkerEdgeColor', 'r', 'MarkerSize', 2.5, 'LineWidth', 1.6);
+    %     end
+    % end
+
+    % make the figure full screen
+    set(fig, 'Units', 'normalized', 'OuterPosition', [0 0 1 1]);
+
+    saveas(gcf, fig_name, 'fig');
+    saveas(gcf, fig_name, 'pdf');
+
+    % close(fig);
+end
